@@ -200,7 +200,7 @@ PERIOD_PRESETS = ["Semua waktu", "Hari ini", "7 hari terakhir", "Bulan ini", "Bu
 
 def period_range(preset: str, today: date | None = None, custom=(None, None)):
     """Kembalikan (start, end) bertipe date atau (None, None) untuk 'Semua waktu'."""
-    today = today or date.today()
+    today = today or today_local()
     if preset == "Hari ini":
         return today, today
     if preset == "7 hari terakhir":
@@ -517,7 +517,21 @@ class SupabaseStore:
             raise RuntimeError(f"Supabase {r.status_code}: {r.text[:200]}")
 
 
+def _tz():
+    """Zona waktu tampilan: WIB (server Streamlit Cloud berjalan di UTC)."""
+    try:
+        from zoneinfo import ZoneInfo
+
+        return ZoneInfo("Asia/Jakarta")
+    except Exception:  # noqa: BLE001 - data zona waktu tidak tersedia
+        return timezone(timedelta(hours=7))
+
+
+def today_local() -> date:
+    return datetime.now(_tz()).date()
+
+
 def fmt_last_update(ms) -> str:
     if not ms:
         return "Belum ada update"
-    return "Last update: " + datetime.fromtimestamp(num(ms) / 1000).strftime("%d/%m/%Y, %H.%M.%S")
+    return "Last update: " + datetime.fromtimestamp(num(ms) / 1000, _tz()).strftime("%d/%m/%Y, %H.%M.%S")

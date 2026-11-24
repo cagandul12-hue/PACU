@@ -322,23 +322,38 @@ DARK_CSS = """
 --field:#1d2942;--pg1:#0b1220;--pg2:#0e1626;--pg3:#0b1220;--glow:rgba(60,130,255,.14)}
 .stApp .topbar img{background:#fff;padding:6px 14px;box-shadow:0 8px 22px rgba(0,0,0,.35)}
 .stApp .kpi,.stApp .gcard,.stApp .ptc,.stApp .pod,.stApp .panel,.stApp .last-update{box-shadow:0 10px 26px rgba(0,0,0,.35)}
-.stApp [data-testid="stDataFrame"]{filter:invert(.92) hue-rotate(180deg)}
 </style>
 """
 
-# mode gelap: ingat pilihan lewat alamat (?tema=gelap) supaya tidak hilang saat refresh
+# Tema: default mengikuti mode sistem perangkat. Pilihan manual lewat toggle diingat di alamat
+# (?tema=gelap atau ?tema=terang) supaya tidak hilang saat refresh.
+def _system_dark() -> bool:
+    try:
+        return st.context.theme.type == "dark"  # type: ignore[attr-defined]
+    except Exception:  # noqa: BLE001 - versi Streamlit lama / belum terdeteksi
+        return False
+
+
+_pref = st.query_params.get("tema")  # "gelap" | "terang" | None (ikut sistem)
 if "dark" not in st.session_state:
-    st.session_state["dark"] = st.query_params.get("tema") == "gelap"
+    st.session_state["dark"] = (_pref == "gelap") if _pref in ("gelap", "terang") else _system_dark()
 
 
 def cb_theme() -> None:
-    if st.session_state.get("dark"):
-        st.query_params["tema"] = "gelap"
-    elif "tema" in st.query_params:
-        del st.query_params["tema"]
+    st.query_params["tema"] = "gelap" if st.session_state.get("dark") else "terang"
 
 
-st.markdown(CSS + (DARK_CSS if st.session_state.get("dark") else ""), unsafe_allow_html=True)
+_DARK_INNER = DARK_CSS.replace("<style>", "").replace("</style>", "")
+_DF_INVERT = '.stApp [data-testid="stDataFrame"]{filter:invert(.92) hue-rotate(180deg)}'
+if _pref == "gelap":      # dipilih manual: gelap (tabel dibalik hanya bila sistem terang)
+    theme_css = f"<style>{_DARK_INNER}@media (prefers-color-scheme: light){{{_DF_INVERT}}}</style>"
+elif _pref == "terang":   # dipilih manual: terang (tabel dibalik hanya bila sistem gelap)
+    theme_css = f"<style>@media (prefers-color-scheme: dark){{{_DF_INVERT}}}</style>"
+else:                     # otomatis: ikut sistem perangkat
+    theme_css = f"<style>@media (prefers-color-scheme: dark){{{_DARK_INNER}}}</style>"
+
+
+st.markdown(CSS + theme_css, unsafe_allow_html=True)
 
 
 # ----------------------------------------------------------------------------
@@ -353,7 +368,7 @@ def _reset_numbers() -> None:
 
 def _init_form(state: dict) -> None:
     ss = st.session_state
-    ss["f_date"] = date.today()
+    ss["f_date"] = core.today_local()
     _reset_numbers()
     if state["employees"]:
         ss["f_emp"] = state["employees"][0]["id"]
@@ -536,7 +551,7 @@ md(f"""
 fp1, fp2, fp3, fp4 = st.columns([1.3, 1, 1, 1])
 preset = fp1.selectbox("Periode data", core.PERIOD_PRESETS, key="p_preset",
                        help="Berlaku untuk KPI, ringkasan, leaderboard, rekap, dan detail input.")
-today = date.today()
+today = core.today_local()
 c_start = fp2.date_input("Dari", value=today.replace(day=1), key="p_start",
                          format="DD/MM/YYYY") if preset == "Kustom" else None
 c_end = fp3.date_input("Sampai", value=today, key="p_end",
