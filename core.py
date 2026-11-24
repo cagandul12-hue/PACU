@@ -13,7 +13,7 @@ import os
 import tempfile
 import time
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 # ----------------------------------------------------------------------------
@@ -458,6 +458,63 @@ class FirebaseStore:
         }
         r = requests.patch(self.url, params=self._params(), json=payload, timeout=15)
         r.raise_for_status()
+
+
+class SupabaseStore:
+    """Supabase (Postgres) lewat REST. Seluruh data disimpan sebagai satu baris JSON di tabel `pacu_state`."""
+
+    label = "Supabase aktif · sinkron otomatis"
+    supports_sync = True
+
+    def __init__(self, url: str, key: str, table: str = "pacu_state", row_id: str = "main",
+                 seed_path: str | None = None):
+        self.base = f"{url.rstrip('/')}/rest/v1/{table}"
+        self.row_id = row_id
+        self.seed_path = seed_path
+        self.headers = {"apikey": key, "Content-Type": "application/json"}
+        if key.startswith("eyJ"):  # kunci format lama (JWT) juga dikirim sebagai Bearer
+            self.headers["Authorization"] = f"Bearer {key}"
+
+    def _get(self, select: str):
+        import requests
+
+        r = requests.get(self.base, headers=self.headers, timeout=15,
+                         params={"id": f"eq.{self.row_id}", "select": select})
+        if r.status_code >= 400:
+            raise RuntimeError(f"Supabase {r.status_code}: {r.text[:200]}")
+        return r.json()
+
+    def load(self) -> dict:
+        rows = self._get("data")
+        if rows:
+            return normalize_state(rows[0].get("data"))
+        seed = {}
+        if self.seed_path and os.path.exists(self.seed_path):
+            with open(self.seed_path, encoding="utf-8") as f:
+                seed = json.load(f)
+        state = normalize_state(seed)
+        self.save(state)  # baris pertama dibuat otomatis
+        return state
+
+    def peek(self) -> int:
+        """Cek cepat penanda update terakhir (tanpa mengunduh seluruh data)."""
+        rows = self._get("lu:data->>lastUpdate")
+        try:
+            return int(float(rows[0]["lu"])) if rows and rows[0].get("lu") else 0
+        except (TypeError, ValueError):
+            return 0
+
+    def save(self, state: dict) -> None:
+        import requests
+
+        state = dict(state)
+        state["lastUpdate"] = int(time.time() * 1000)
+        headers = {**self.headers, "Prefer": "resolution=merge-duplicates,return=minimal"}
+        r = requests.post(self.base, headers=headers, timeout=15,
+                          json={"id": self.row_id, "data": state,
+                                "updated_at": datetime.now(timezone.utc).isoformat()})
+        if r.status_code >= 400:
+            raise RuntimeError(f"Supabase {r.status_code}: {r.text[:200]}")
 
 
 def fmt_last_update(ms) -> str:
