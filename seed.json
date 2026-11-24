@@ -1,0 +1,182 @@
+{
+  "employees": [
+    {
+      "id": "emp-01",
+      "name": "MHD Hendrianto",
+      "group": "R01"
+    },
+    {
+      "id": "emp-02",
+      "name": "Catur Triwibowo",
+      "group": "R02"
+    },
+    {
+      "id": "emp-03",
+      "name": "Dewi Aji Galuh Sekar Arum",
+      "group": "R03"
+    },
+    {
+      "id": "emp-04",
+      "name": "Dwiranti Hertika",
+      "group": "R04"
+    },
+    {
+      "id": "emp-05",
+      "name": "Fajar Nugroho",
+      "group": "R02"
+    },
+    {
+      "id": "emp-06",
+      "name": "Hasti Widianti",
+      "group": "R03"
+    },
+    {
+      "id": "emp-07",
+      "name": "Joyce Bekti Gultom",
+      "group": "R03"
+    },
+    {
+      "id": "emp-08",
+      "name": "Michael Purwanto",
+      "group": "R01"
+    },
+    {
+      "id": "emp-09",
+      "name": "Muhasan",
+      "group": "R01"
+    },
+    {
+      "id": "emp-10",
+      "name": "Nurkholidah",
+      "group": "R04"
+    },
+    {
+      "id": "emp-11",
+      "name": "Pandu Prasetyo Nurcahyo",
+      "group": "R03"
+    },
+    {
+      "id": "emp-12",
+      "name": "Rahmat Hidayat Syam",
+      "group": "R02"
+    },
+    {
+      "id": "emp-13",
+      "name": "Riadi Widianto",
+      "group": "R01"
+    },
+    {
+      "id": "emp-14",
+      "name": "Rina Fitrianti",
+      "group": "R04"
+    },
+    {
+      "id": "emp-15",
+      "name": "Rizki Mega Maulana",
+      "group": "R04"
+    },
+    {
+      "id": "emp-16",
+      "name": "Shalomita Agustina",
+      "group": "R02"
+    },
+    {
+      "id": "emp-17",
+      "name": "Tania Carissa Hutabarat",
+      "group": "R02"
+    }
+  ],
+  "records": [
+    {
+      "id": "rec-1",
+      "date": "2026-07-06",
+      "employeeName": "MHD Hendrianto",
+      "group": "R04",
+      "remarks": "",
+      "livin": 3,
+      "merchant": 0,
+      "mcy": 0,
+      "edc": 0,
+      "mtr": 0,
+      "mtb": 0,
+      "prioritas": 0,
+      "deposito": 0,
+      "kopra": 0
+    },
+    {
+      "id": "rec-2",
+      "date": "2026-07-06",
+      "employeeName": "MHD Hendrianto",
+      "group": "R01",
+      "remarks": "",
+      "livin": 1,
+      "merchant": 0,
+      "mcy": 0,
+      "edc": 0,
+      "mtr": 0,
+      "mtb": 0,
+      "prioritas": 0,
+      "deposito": 0,
+      "kopra": 0
+    },
+    {
+      "id": "rec-3",
+      "date": "2026-07-06",
+      "employeeName": "MHD Hendrianto",
+      "group": "R04",
+      "remarks": "",
+      "livin": 1,
+      "merchant": 0,
+      "mcy": 0,
+      "edc": 0,
+      "mtr": 1,
+      "mtb": 0,
+      "prioritas": 0,
+      "deposito": 0,
+      "kopra": 0
+    },
+    {
+      "id": "rec-4",
+      "date": "2026-07-06",
+      "employeeName": "MHD Hendrianto",
+      "group": "R04",
+      "remarks": "",
+      "livin": 7,
+      "merchant": 7,
+      "mcy": 0,
+      "edc": 0,
+      "mtr": 8,
+      "mtb": 0,
+      "prioritas": 0,
+      "deposito": 0,
+      "kopra": 0
+    },
+    {
+      "id": "rec-5",
+      "date": "2026-11-19",
+      "employeeName": "MHD Hendrianto",
+      "group": "R01",
+      "remarks": "",
+      "livin": 0,
+      "merchant": 0,
+      "mcy": 0,
+      "edc": 0,
+      "mtr": 0,
+      "mtb": 0,
+      "prioritas": 1,
+      "deposito": 0,
+      "kopra": 0
+    }
+  ],
+  "productTargets": {
+    "livin": 90,
+    "merchant": 10,
+    "mcy": 24,
+    "edc": 10,
+    "mtr": 10,
+    "mtb": 4,
+    "prioritas": 4,
+    "deposito": 4,
+    "kopra": 1
+  }
+}
