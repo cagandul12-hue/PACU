@@ -47,3 +47,12 @@ assets/         logo & ikon
 tests/          python tests/test_core.py   (logika)
                 python tests/smoke_stub.py  (menjalankan app.py dengan Streamlit tiruan)
 ```
+
+## Penyimpanan Supabase (data tersimpan permanen & sinkron antar perangkat)
+
+1. Jalankan `supabase_setup.sql` sekali di Supabase (SQL Editor).
+2. Isi `supabase_url` dan `supabase_key` (Secret key) di Streamlit Cloud -> Settings -> Secrets
+   (lihat `.streamlit/secrets.toml.example`). Tanpa secrets, app memakai file lokal sementara.
+3. Perangkat lain memperbarui tampilan otomatis sekitar 8 detik setelah ada data baru.
+
+Mode gelap: toggle "Mode gelap" di bagian atas (pilihan diingat lewat `?tema=gelap` di alamat).

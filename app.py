@@ -32,26 +32,36 @@ st.set_page_config(page_title=f"{APP_NAME} · {APP_TAGLINE}",
 # ----------------------------------------------------------------------------
 # Penyimpanan (JSON lokal, atau Firebase bila dikonfigurasi di secrets)
 # ----------------------------------------------------------------------------
+APP_VERSION = "2026-11-24-v4"
+
+
+def read_secrets() -> tuple[dict, str | None]:
+    """Baca Secrets Streamlit. Mengembalikan (isi datar, pesan error atau None)."""
+    try:
+        flat: dict = {}
+        for k in st.secrets.keys():  # type: ignore[attr-defined]
+            v = st.secrets[k]
+            if hasattr(v, "keys"):  # bila terlanjur ditaruh di bawah [judul-bagian]
+                for k2 in v.keys():
+                    flat.setdefault(k2, v[k2])
+            else:
+                flat[k] = v
+        return flat, None
+    except Exception as exc:  # noqa: BLE001
+        return {}, f"{type(exc).__name__}: {exc}"
+
+
 @st.cache_resource
 def get_store():
-    sb_url = sb_key = None
-    db_url = auth = None
-    node = "raceDashboard"  # nama node default dipertahankan agar data lama tetap terbaca
-    table = "pacu_state"
-    try:
-        sb_url = st.secrets.get("supabase_url")  # type: ignore[attr-defined]
-        sb_key = st.secrets.get("supabase_key")  # type: ignore[attr-defined]
-        table = st.secrets.get("supabase_table", table)  # type: ignore[attr-defined]
-        db_url = st.secrets.get("firebase_db_url")  # type: ignore[attr-defined]
-        auth = st.secrets.get("firebase_auth")  # type: ignore[attr-defined]
-        node = st.secrets.get("firebase_node", node)  # type: ignore[attr-defined]
-    except Exception:  # noqa: BLE001 - secrets tidak ada
-        pass
+    sec, _err = read_secrets()
     seed = os.path.join(BASE, "data", "seed.json")
+    sb_url, sb_key = sec.get("supabase_url"), sec.get("supabase_key")
     if sb_url and sb_key:
-        return core.SupabaseStore(str(sb_url).strip(), str(sb_key).strip(), str(table), seed_path=seed)
-    if db_url:
-        return core.FirebaseStore(db_url, auth or None, node)
+        return core.SupabaseStore(str(sb_url).strip().strip("\"'"), str(sb_key).strip().strip("\"'"),
+                                  str(sec.get("supabase_table", "pacu_state")), seed_path=seed)
+    if sec.get("firebase_db_url"):
+        return core.FirebaseStore(sec["firebase_db_url"], sec.get("firebase_auth") or None,
+                                  sec.get("firebase_node", "raceDashboard"))
     path = os.environ.get("PACU_DATA_FILE", os.path.join(BASE, "data", "pacu_data.json"))
     return core.JsonStore(path, seed)
 
@@ -861,6 +871,55 @@ with tab_exp:
     st.file_uploader("Impor JSON", type=["json"], key="import_file")
     st.button("Impor & Timpa Data", on_click=cb_import)
 
+
+
+# ----------------------------------------------------------------------------
+# Diagnosis koneksi penyimpanan
+# ----------------------------------------------------------------------------
+def render_diagnosis() -> None:
+    flat, err = read_secrets()
+    url = str(flat.get("supabase_url") or "")
+    key = str(flat.get("supabase_key") or "")
+    out = [f"Versi kode        : {APP_VERSION}",
+           f"Penyimpanan dipakai: {type(store).__name__}"]
+    if err:
+        out.append(f"Secrets gagal dibaca: {err}")
+    else:
+        out.append("Nama di Secrets   : " + (", ".join(sorted(flat)) or "(kosong)"))
+    if not url:
+        out.append("supabase_url      : TIDAK DITEMUKAN")
+    else:
+        notes = []
+        if not url.startswith("https://"):
+            notes.append("harus diawali https://")
+        if not url.rstrip("/").endswith(".supabase.co"):
+            notes.append("harus berakhir .supabase.co")
+        if "/rest" in url or url.endswith("/"):
+            notes.append("hapus bagian /rest/v1 atau garis miring di ujung")
+        if url != url.strip() or '"' in url or "'" in url or "”" in url or "“" in url:
+            notes.append("ada spasi/tanda kutip ikut terbawa")
+        out.append("supabase_url      : " + ("OK" if not notes else "; ".join(notes)))
+    if not key:
+        out.append("supabase_key      : TIDAK DITEMUKAN")
+    else:
+        kind = ("Secret key (benar)" if key.startswith("sb_secret_") else
+                "Publishable key (SALAH, pakai Secret key)" if key.startswith("sb_publishable_") else
+                "kunci format lama (JWT)" if key.startswith("eyJ") else "format tidak dikenal")
+        notes = [] if key == key.strip() and '"' not in key and "”" not in key else ["ada spasi/tanda kutip ikut terbawa"]
+        out.append(f"supabase_key      : {kind}, panjang {len(key)} karakter" + (" · " + "; ".join(notes) if notes else ""))
+    if isinstance(store, core.SupabaseStore):
+        try:
+            store._get("id")
+            out.append("Tes koneksi       : BERHASIL (tabel pacu_state terbaca)")
+        except Exception as exc:  # noqa: BLE001
+            out.append(f"Tes koneksi       : GAGAL -> {str(exc)[:300]}")
+    else:
+        out.append("Tes koneksi       : dilewati (Supabase tidak dipakai)")
+    with st.expander("🔧 Cek koneksi penyimpanan", expanded=bool(store_error)):
+        st.code("\n".join(out), language=None)
+
+
+render_diagnosis()
 
 # ----------------------------------------------------------------------------
 # Sinkron otomatis antar perangkat (hanya bila memakai Supabase)

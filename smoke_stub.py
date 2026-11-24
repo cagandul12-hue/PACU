@@ -35,12 +35,14 @@ def stub_widget(name, *a, **k):
         n = a[0] if isinstance(a[0], int) else len(a[0]); return [Ctx() for _ in range(n)]
     if name == "tabs": return [Ctx() for _ in a[0]]
     return None
-st.session_state = SS(); st.secrets = {}
+st.session_state = SS(); st.secrets = {}; st.query_params = {}; st.context = types.SimpleNamespace(theme=types.SimpleNamespace(type='light'))
+st.fragment = lambda *a, **k: (lambda f: f)
 st.cache_resource = lambda f: f; st.cache_data = lambda f: f
 st.set_page_config = lambda **k: None
 st.dialog = lambda *a, **k: (lambda f: f)
 st.rerun = lambda: None
 st.expander = lambda *a, **k: Ctx()
+st.code = lambda *a, **k: None
 st.form = lambda *a, **k: Ctx()
 st.markdown = lambda s, **k: calls["md"].append(s)
 st.dataframe = lambda *a, **k: Event()
